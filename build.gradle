@@ -18,7 +18,7 @@ apply plugin: 'groovy'
 apply plugin: 'spring-boot'
 apply plugin: 'project-report'
 
-defaultTasks 'clean', 'projectReport', 'run'
+defaultTasks 'clean', 'projectReport', 'build'
 
 configurations.all {
     exclude group: 'commons-logging'
