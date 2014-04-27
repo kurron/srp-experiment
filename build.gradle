@@ -1,0 +1,55 @@
+buildscript {
+	ext {
+		springBootVersion = '1.0.2.RELEASE'
+                springFrameworkVersion = '4.0.3.RELEASE'
+                groovyVersion = '2.2.1'
+                spockVersion = '0.7-groovy-2.0'
+                bouncyCastleVersion = '1.50'
+	}
+    repositories {
+    	mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+apply plugin: 'groovy'
+apply plugin: 'spring-boot'
+apply plugin: 'project-report'
+
+defaultTasks 'clean', 'projectReport', 'run'
+
+configurations.all {
+    exclude group: 'commons-logging'
+    exclude group: 'org.mockito'
+    exclude module: 'junit-dep'
+    exclude module: 'hamcrest-core'
+}
+
+jar {
+    baseName = 'srp'
+    version =  '0.0.1-SNAPSHOT'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-actuator:${springBootVersion}")
+    compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    compile "org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}"
+    compile "org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}"
+    compile "org.bouncycastle:bcprov-ext-jdk15on:${bouncyCastleVersion}"
+
+    testCompile("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
+    testCompile( "org.spockframework:spock-core:${spockVersion}" ) { exclude module: 'groovy-all' }
+    testCompile( "org.spockframework:spock-spring:${spockVersion}" ) { exclude module: 'groovy-all' }
+    testCompile "org.springframework:spring-test:${springFrameworkVersion}"
+    testCompile "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.11'
+}
