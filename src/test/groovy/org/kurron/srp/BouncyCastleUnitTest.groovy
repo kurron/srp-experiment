@@ -16,8 +16,8 @@ class BouncyCastleUnitTest extends Specification {
 
     def 'exercise simple math'() {
         // pre-shared by user and host
-        def safePrime = randomNumber()
-        def generator = randomNumber()
+        def safePrime = new BigInteger( '5' )
+        def generator = new BigInteger( '2' )
         def hashFunction = digest()
 
         given: 'a valid user'

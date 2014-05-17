@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: groovy-all-2.3.0">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.codehaus.groovy/groovy-all/2.3.0/c034699189c8ef92c98c4f483ecb109646f70189/groovy-all-2.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.codehaus.groovy/groovy-all/2.3.0/bd0e47092b4c86ae66c97cd258f902d16afd5eb/groovy-all-2.3.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
