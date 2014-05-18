@@ -4,18 +4,9 @@ import com.nimbusds.srp6.SRP6ClientSession
 import com.nimbusds.srp6.SRP6CryptoParams
 import com.nimbusds.srp6.SRP6ServerSession
 import com.nimbusds.srp6.SRP6VerifierGenerator
-import org.bouncycastle.crypto.Digest
-import org.bouncycastle.crypto.agreement.srp.SRP6Client
-import org.bouncycastle.crypto.agreement.srp.SRP6Server
-import org.bouncycastle.crypto.digests.SHA256Digest
-import spock.lang.Ignore
 import spock.lang.Specification
 
-import java.security.SecureRandom
-
 class Connect2idUnitTest extends Specification {
-
-    static final SecureRandom random = new SecureRandom()
 
     /**
      * Simulated database.
@@ -28,13 +19,13 @@ class Connect2idUnitTest extends Specification {
         // the server may make these values available via JSON at run-time a do not have to be hard-coded into the client
 
         // N = the safe prime number
-        def safePrime = SRP6CryptoParams.N_1024
+        def N = SRP6CryptoParams.N_256
 
         // g - generator
-        def generator = SRP6CryptoParams.g_common
+        def g = SRP6CryptoParams.g_common
 
         // H - the hashing function to use
-        def hashFunction = 'SHA-1'
+        def H = 'SHA-1'
 
         // the length of the salt bytes
         int saltLength = 16
@@ -49,20 +40,20 @@ class Connect2idUnitTest extends Specification {
         // H(A|M1|S)
 
         given: 'an SRP configuration using specified values'
-        SRP6CryptoParams configuration = new SRP6CryptoParams( safePrime, generator, hashFunction )
+        def configuration = new SRP6CryptoParams( N, g, H )
 
         and: 'a verifier generator'
-        SRP6VerifierGenerator gen = new SRP6VerifierGenerator( configuration )
+        def generator = new SRP6VerifierGenerator( configuration )
 
         and: 'a random salt (s)'
-        BigInteger salt = new BigInteger( SRP6VerifierGenerator.generateRandomSalt( saltLength ) )
+        def salt = new BigInteger( SRP6VerifierGenerator.generateRandomSalt( saltLength ) )
 
         and: 'user credentials'
-        String username = "alice"
-        String password = "secret"
+        def username = "alice"
+        def password = "secret"
 
         and: 'a computed verifier (v)'
-        BigInteger verifier = gen.generateVerifier( salt, username, password )
+        def verifier = generator.generateVerifier( salt, username, password )
 
         and: 'the client sends username, salt and verifier to the server as part of initial registration'
         database[username] = new DatabaseRecord( salt: salt, verifier: verifier )
