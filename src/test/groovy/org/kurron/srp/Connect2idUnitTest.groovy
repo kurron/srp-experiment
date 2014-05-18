@@ -67,13 +67,11 @@ class Connect2idUnitTest extends Specification {
 
         when: 'the client requests authentication'
         def clientSession = new SRP6ClientSession()
-        // let the SRP engine know we are starting the authentication dance
         clientSession.step1( username, password )
 
         then: "server responds to the client with the public value ‘B’ and password salt ‘s’"
         def serverSession = new SRP6ServerSession( configuration )
-        // find the client's information in the database
-        def databaseEntry = database[username]
+        def databaseEntry = findIdentityInDatabase(username)
         def B = serverSession.step1( username, Hex.decodeToBigInteger( databaseEntry.salt ), Hex.decodeToBigInteger( databaseEntry.verifier )  )
 
         and: "the clients computes the public value ‘A’ and evidence message ‘M1’, sending those to the server"
@@ -82,7 +80,9 @@ class Connect2idUnitTest extends Specification {
         def credentials = clientSession.step2( configuration, Hex.decodeToBigInteger( sentServerSalt ), Hex.decodeToBigInteger( sentB ) )
 
         and: 'the server calculates its evidence message M2 and sends that to the client'
-        def M2 = serverSession.step2( credentials.A, credentials.M1 )
+        def sentA = Hex.encode( credentials.A )
+        def sentM1 = Hex.encode( credentials.M1 )
+        def M2 = serverSession.step2( Hex.decodeToBigInteger( sentA ), Hex.decodeToBigInteger( sentM1 ) )
 
         and: "client validates the server evidence message ‘M2’ after which user and server are mutually authenticated"
         def sentM2 = Hex.encode( M2 )
@@ -92,6 +92,10 @@ class Connect2idUnitTest extends Specification {
         def clientKey = clientSession.getSessionKey( true )
         def serverKey = serverSession.getSessionKey( true )
         clientKey == serverKey
+    }
+
+    private DatabaseRecord findIdentityInDatabase(String username) {
+        database[username]
     }
 
     class DatabaseRecord {
