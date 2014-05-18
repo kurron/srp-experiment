@@ -51,36 +51,42 @@ class Connect2idUnitTest extends Specification {
 
         and: 'user credentials'
         def username = "alice"
-        def password = "secret"
+        def password = "in wonderland"
 
         and: 'a computed verifier (v)'
         def verifier = generator.generateVerifier( salt, username, password )
 
         and: 'the client sends username, salt and verifier to the server as part of initial registration'
-        // pretend we are sending hex encoded values over the network as part of a JSON payload
-        def hexSalt = Hex.encode( salt )
-        def hexVerifier = Hex.encode( verifier )
-        database[username] = new DatabaseRecord( salt: Hex.decodeToBigInteger( hexSalt ), verifier: Hex.decodeToBigInteger( hexVerifier ) )
+        // from now on pretend we are sending hex encoded values over the network as part of a JSON payload
+        def sentSalt = Hex.encode( salt )
+        def sentVerifier = Hex.encode( verifier )
+        database[username] = new DatabaseRecord( salt: sentSalt, verifier: sentVerifier )
+
+        and: 'the registration is recorded in the server database'
+        database[username]
 
         when: 'the client requests authentication'
         def clientSession = new SRP6ClientSession()
+        // let the SRP engine know we are starting the authentication dance
         clientSession.step1( username, password )
-        // in a real scenario, the username is sent over the network to the server
 
-        then: "server responds to the client with the server public value ‘B’ and password salt ‘s’"
+        then: "server responds to the client with the public value ‘B’ and password salt ‘s’"
         def serverSession = new SRP6ServerSession( configuration )
-        // look up salt and verifier for the provided identity
+        // find the client's information in the database
         def databaseEntry = database[username]
-        def B = serverSession.step1( username, databaseEntry.salt, databaseEntry.verifier )
+        def B = serverSession.step1( username, Hex.decodeToBigInteger( databaseEntry.salt ), Hex.decodeToBigInteger( databaseEntry.verifier )  )
 
-        and: "the clients computes the client public value ‘A’ and evidence message ‘M1’, sending those to the server"
-        def credentials = clientSession.step2( configuration, databaseEntry.salt, B )
+        and: "the clients computes the public value ‘A’ and evidence message ‘M1’, sending those to the server"
+        def sentB = Hex.encode( B )
+        def sentServerSalt = databaseEntry.salt
+        def credentials = clientSession.step2( configuration, Hex.decodeToBigInteger( sentServerSalt ), Hex.decodeToBigInteger( sentB ) )
 
-        and: 'the service calculates its evidence message M2 and sends that to the client'
+        and: 'the server calculates its evidence message M2 and sends that to the client'
         def M2 = serverSession.step2( credentials.A, credentials.M1 )
 
         and: "client validates the server evidence message ‘M2’ after which user and server are mutually authenticated"
-        clientSession.step3( M2 )
+        def sentM2 = Hex.encode( M2 )
+        clientSession.step3( Hex.decodeToBigInteger( sentM2 ) )
 
         and: 'both the client and server can compute a common session key and use that to encrypt traffic, if desired'
         def clientKey = clientSession.getSessionKey( true )
@@ -89,7 +95,7 @@ class Connect2idUnitTest extends Specification {
     }
 
     class DatabaseRecord {
-        BigInteger salt
-        BigInteger verifier
+        String salt
+        String verifier
     }
 }
