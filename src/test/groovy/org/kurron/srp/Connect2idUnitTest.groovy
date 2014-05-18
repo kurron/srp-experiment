@@ -1,5 +1,6 @@
 package org.kurron.srp
 
+import com.nimbusds.srp6.Hex
 import com.nimbusds.srp6.SRP6ClientSession
 import com.nimbusds.srp6.SRP6CryptoParams
 import com.nimbusds.srp6.SRP6ServerSession
@@ -25,7 +26,7 @@ class Connect2idUnitTest extends Specification {
         def g = SRP6CryptoParams.g_common
 
         // H - the hashing function to use
-        def H = 'SHA-1'
+        def H = 'SHA-256'
 
         // the length of the salt bytes
         int saltLength = 16
@@ -39,7 +40,7 @@ class Connect2idUnitTest extends Specification {
         // M2 calculation -- how the evidence message for the server is calculated
         // H(A|M1|S)
 
-        given: 'an SRP configuration using specified values'
+        given: 'a common SRP configuration'
         def configuration = new SRP6CryptoParams( N, g, H )
 
         and: 'a verifier generator'
@@ -56,7 +57,10 @@ class Connect2idUnitTest extends Specification {
         def verifier = generator.generateVerifier( salt, username, password )
 
         and: 'the client sends username, salt and verifier to the server as part of initial registration'
-        database[username] = new DatabaseRecord( salt: salt, verifier: verifier )
+        // pretend we are sending hex encoded values over the network as part of a JSON payload
+        def hexSalt = Hex.encode( salt )
+        def hexVerifier = Hex.encode( verifier )
+        database[username] = new DatabaseRecord( salt: Hex.decodeToBigInteger( hexSalt ), verifier: Hex.decodeToBigInteger( hexVerifier ) )
 
         when: 'the client requests authentication'
         def clientSession = new SRP6ClientSession()
@@ -78,7 +82,7 @@ class Connect2idUnitTest extends Specification {
         and: "client validates the server evidence message ‘M2’ after which user and server are mutually authenticated"
         clientSession.step3( M2 )
 
-        and: 'both the client and server can compute a common session key and use that to encrypt traffic'
+        and: 'both the client and server can compute a common session key and use that to encrypt traffic, if desired'
         def clientKey = clientSession.getSessionKey( true )
         def serverKey = serverSession.getSessionKey( true )
         clientKey == serverKey
